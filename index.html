@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔐 Шифровальщик текста</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: linear-gradient(135deg, #1e1e2f 0%, #2d1b4e 100%);
+    color: #e8e8f0;
+    min-height: 100vh;
+    padding: 30px 16px;
+  }
+
+  .app {
+    max-width: 760px;
+    margin: 0 auto;
+    background: #262633;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+    overflow: hidden;
+  }
+
+  header {
+    padding: 22px 26px;
+    background: linear-gradient(90deg, #3b2d63, #2c3e6e);
+    border-bottom: 1px solid #3a3a4a;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+
+  header p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #b8b8d0;
+  }
+
+  .tabs {
+    display: flex;
+    background: #1f1f2b;
+    border-bottom: 1px solid #3a3a4a;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: #9a9ab0;
+    border: none;
+    background: transparent;
+    transition: all .2s;
+    font-family: inherit;
+  }
+
+  .tab:hover { color: #d0d0e0; background: #262633; }
+
+  .tab.active {
+    color: #fff;
+    background: #262633;
+    box-shadow: inset 0 -2px 0 #7c5cff;
+  }
+
+  .panel { padding: 22px 26px 26px; display: none; }
+  .panel.active { display: block; }
+
+  .row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  label {
+    font-size: 13px;
+    color: #b0b0c0;
+    font-weight: 500;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #3a3a4a;
+    background: #1a1a24;
+    color: #e8e8f0;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 13px;
+    resize: vertical;
+    outline: none;
+    transition: border-color .2s;
+    line-height: 1.5;
+  }
+
+  textarea:focus { border-color: #7c5cff; }
+
+  input[type="number"], input[type="text"] {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #3a3a4a;
+    background: #1a1a24;
+    color: #e8e8f0;
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+  }
+
+  input:focus { border-color: #7c5cff; }
+
+  input[type="number"] { width: 80px; }
+  input[type="text"] { flex: 1; min-width: 140px; }
+
+  button {
+    padding: 9px 16px;
+    border-radius: 8px;
+    border: 1px solid #3a3a4a;
+    background: #303040;
+    color: #e8e8f0;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+
+  button:hover { background: #3a3a4d; border-color: #50506a; }
+  button:active { transform: translateY(1px); }
+
+  button.primary {
+    background: linear-gradient(135deg, #7c5cff, #a05cff);
+    border: none;
+    font-weight: 500;
+  }
+
+  button.primary:hover { filter: brightness(1.12); }
+
+  button.success {
+    background: linear-gradient(135deg, #2e9e6a, #35b57c);
+    border: none;
+    font-weight: 500;
+  }
+
+  button.success:hover { filter: brightness(1.12); }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #b0b0c0;
+    margin: 16px 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .output {
+    background: #16161e;
+    border: 1px solid #3a3a4a;
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 100px;
+    max-height: 260px;
+    overflow-y: auto;
+    font-family: "Consolas", "Monaco", monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    word-break: break-all;
+    white-space: pre-wrap;
+    color: #c8f0d8;
+  }
+
+  .output:empty::before {
+    content: "Здесь появится результат…";
+    color: #50505f;
+    font-style: italic;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #2e9e6a;
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    opacity: 0;
+    transition: all .3s;
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .hint {
+    font-size: 11px;
+    color: #6c6c80;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>🔐 Шифровальщик текста</h1>
+    <p>Шифр Цезаря и XOR — прямо в браузере</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="caesar">Шифр Цезаря</button>
+    <button class="tab" data-tab="xor">XOR</button>
+  </div>
+
+  <!-- Вкладка Цезаря -->
+  <div class="panel active" id="panel-caesar">
+    <div class="section-title">Исходный текст</div>
+    <textarea id="caesar-input" placeholder="Введи текст на русском или английском…"></textarea>
+
+    <div class="row" style="margin-top:14px">
+      <label>Сдвиг:</label>
+      <input type="number" id="caesar-shift" value="3">
+      <button class="primary" id="caesar-enc">🔒 Зашифровать</button>
+      <button class="success" id="caesar-dec">🔓 Расшифровать</button>
+    </div>
+
+    <div class="section-title">
+      Результат
+      <button id="caesar-copy">📋 Копировать</button>
+    </div>
+    <div class="output" id="caesar-output"></div>
+  </div>
+
+  <!-- Вкладка XOR -->
+  <div class="panel" id="panel-xor">
+    <div class="section-title">Исходный текст</div>
+    <textarea id="xor-input" placeholder="Введи текст (для шифрования) или base64-строку (для расшифровки)…"></textarea>
+
+    <div class="row" style="margin-top:14px">
+      <label>Ключ:</label>
+      <input type="text" id="xor-key" value="secret">
+    </div>
+    <div class="row">
+      <button class="primary" id="xor-enc">🔒 Зашифровать</button>
+      <button class="success" id="xor-dec">🔓 Расшифровать</button>
+    </div>
+
+    <div class="section-title">
+      Результат
+      <button id="xor-copy">📋 Копировать</button>
+    </div>
+    <div class="output" id="xor-output"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Скопировано</div>
+
+<script>
+// ---------- Логика шифров ----------
+
+const RU_UPPER = "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+const RU_LOWER = RU_UPPER.toLowerCase();
+const EN_UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const EN_LOWER = EN_UPPER.toLowerCase();
+const ALPHABETS = [[RU_UPPER, RU_LOWER], [EN_UPPER, EN_LOWER]];
+
+function caesarShift(text, shift) {
+  let out = "";
+  for (const ch of text) {
+    let done = false;
+    for (const [upper, lower] of ALPHABETS) {
+      let idx = upper.indexOf(ch);
+      if (idx !== -1) {
+        out += upper[(idx + shift + upper.length * 1000) % upper.length];
+        done = true;
+        break;
+      }
+      idx = lower.indexOf(ch);
+      if (idx !== -1) {
+        out += lower[(idx + shift + lower.length * 1000) % lower.length];
+        done = true;
+        break;
+      }
+    }
+    if (!done) out += ch;
+  }
+  return out;
+}
+
+// UTF-8 <-> base64
+function utf8ToBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+function base64ToUtf8(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+}
+
+function xorCipher(text, key) {
+  if (!key) throw new Error("Ключ не может быть пустым");
+  const textBytes = new TextEncoder().encode(text);
+  const keyBytes = new TextEncoder().encode(key);
+  const out = new Uint8Array(textBytes.length);
+  for (let i = 0; i < textBytes.length; i++) {
+    out[i] = textBytes[i] ^ keyBytes[i % keyBytes.length];
+  }
+  let binary = "";
+  out.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+function xorDecipher(encoded, key) {
+  if (!key) throw new Error("Ключ не может быть пустым");
+  const clean = encoded.replace(/\s+/g, "");
+  const binary = atob(clean);
+  const dataBytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) dataBytes[i] = binary.charCodeAt(i);
+  const keyBytes = new TextEncoder().encode(key);
+  const out = new Uint8Array(dataBytes.length);
+  for (let i = 0; i < dataBytes.length; i++) {
+    out[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+  }
+  return new TextDecoder("utf-8", { fatal: false }).decode(out);
+}
+
+// ---------- UI ----------
+
+const $ = id => document.getElementById(id);
+
+// Табы
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    $("panel-" + tab.dataset.tab).classList.add("active");
+  });
+});
+
+// Toast
+let toastTimer = null;
+function showToast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+// Копирование
+async function copyText(text, label) {
+  if (!text) { showToast("Нечего копировать"); return; }
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("Скопировано в буфер");
+  } catch {
+    // fallback
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    showToast("Скопировано в буфер");
+  }
+}
+
+// Цезарь
+$("caesar-enc").addEventListener("click", () => {
+  const text = $("caesar-input").value;
+  const shift = parseInt($("caesar-shift").value, 10);
+  if (!text) { showToast("Введи текст"); return; }
+  if (isNaN(shift)) { showToast("Сдвиг должен быть числом"); return; }
+  $("caesar-output").textContent = caesarShift(text, shift);
+});
+
+$("caesar-dec").addEventListener("click", () => {
+  const text = $("caesar-input").value;
+  const shift = parseInt($("caesar-shift").value, 10);
+  if (!text) { showToast("Введи текст"); return; }
+  if (isNaN(shift)) { showToast("Сдвиг должен быть числом"); return; }
+  $("caesar-output").textContent = caesarShift(text, -shift);
+});
+
+$("caesar-copy").addEventListener("click", () =>
+  copyText($("caesar-output").textContent));
+
+// XOR
+$("xor-enc").addEventListener("click", () => {
+  const text = $("xor-input").value;
+  const key = $("xor-key").value;
+  if (!text) { showToast("Введи текст"); return; }
+  try {
+    $("xor-output").textContent = xorCipher(text, key);
+  } catch (e) {
+    showToast("Ошибка: " + e.message);
+  }
+});
+
+$("xor-dec").addEventListener("click", () => {
+  const text = $("xor-input").value.trim();
+  const key = $("xor-key").value;
+  if (!text) { showToast("Введи base64-строку"); return; }
+  try {
+    $("xor-output").textContent = xorDecipher(text, key);
+  } catch (e) {
+    showToast("Не удалось расшифровать. Проверь base64 и ключ.");
+  }
+});
+
+$("xor-copy").addEventListener("click", () =>
+  copyText($("xor-output").textContent));
+
+// Ctrl+Enter — выполнить основное действие на активной вкладке
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey && e.key === "Enter") {
+    const active = document.querySelector(".tab.active").dataset.tab;
+    if (active === "caesar") $("caesar-enc").click();
+    else $("xor-enc").click();
+  }
+});
+</script>
+
+</body>
+</html>
